@@ -33,34 +33,21 @@ node server/index.js
 
 首次启动后需自行注册账号，第一个注册的用户拥有全部功能权限。
 
-## 异地/远程运行
+## 异地/远程访问
 
-### 方式一：免费云部署（推荐）
+本机双击 `start.bat` 即可同时启动本地服务和公网隧道，公网地址显示在隧道窗口中。
 
-1. 将项目推送到 GitHub
-2. 在 [Railway](https://railway.app) 或 [Render](https://render.com) 导入 GitHub 仓库
-3. 设置启动命令：`node server/index.js`
-4. 注意：免费服务 SQLite 数据重启后会丢失，建议定期备份
-
-### 方式二：VPS 部署
-
-在云服务器（阿里云/腾讯云等）上：
+或手动启动：
 
 ```bash
-git clone <你的仓库地址>
-cd project1/server
-npm install
-cd ..
-nohup node server/index.js > server.log 2>&1 &
+# 终端1：启动本地服务
+node server/index.js
+
+# 终端2：启动公网隧道
+npx localtunnel --port 3000
 ```
 
-### 方式三：内网穿透（临时使用）
-
-在本地启动服务后，使用 Cloudflare Tunnel 临时暴露到公网：
-
-```bash
-cloudflared tunnel --url http://localhost:3000
-```
+隧道窗口会显示一个 `https://xxx.loca.lt` 的公网地址，在任何地方打开该地址即可访问系统。
 
 ## 项目结构
 
