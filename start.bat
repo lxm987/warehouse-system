@@ -2,6 +2,8 @@
 chcp 65001 >nul
 cd /d "%~dp0"
 
+set "PATH=D:\nodejs;%PATH%"
+
 echo.
 echo  ============================================
 echo    仓库进销存管理系统 - 启动中...
@@ -18,10 +20,10 @@ if not exist "server\node_modules\" (
 )
 
 echo  [*] 正在启动本地服务器...
-start "仓库系统-本地服务" cmd /c "node server/index.js"
+start "仓库系统-本地服务" cmd /c "set PATH=D:\nodejs;%%PATH%% && node server/index.js"
 
 echo  [*] 正在启动公网隧道...
-start "仓库系统-公网隧道" cmd /c "npx localtunnel --port 3000"
+start "仓库系统-公网隧道" cmd /c "set PATH=D:\nodejs;%%PATH%% && npx localtunnel --port 3000"
 
 echo.
 echo  ============================================
