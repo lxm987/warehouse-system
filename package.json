@@ -1,0 +1,12 @@
+{
+  "name": "warehouse-system",
+  "version": "1.0.0",
+  "description": "仓库进销存管理系统",
+  "scripts": {
+    "start": "node server/index.js",
+    "install": "cd server && npm install"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

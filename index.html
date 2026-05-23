@@ -45,7 +45,7 @@
                 <h2>用户注册</h2>
                 <div class="auth-form-row">
                     <div class="auth-form-group">
-                        <label>昵称 <span class="required">*</span></label>
+                        <label>用户名 <span class="required">*</span></label>
                         <input type="text" id="reg-username" placeholder="2-20位字母、数字或中文" required>
                     </div>
                     <div class="auth-form-group">
@@ -104,8 +104,8 @@
                 <h2>找回密码</h2>
                 <div id="forgot-step1">
                     <div class="auth-form-group">
-                        <label>昵称</label>
-                        <input type="text" id="forgot-username" placeholder="请输入昵称" required>
+                        <label>用户名</label>
+                        <input type="text" id="forgot-username" placeholder="请输入用户名" required>
                     </div>
                     <div class="auth-form-actions">
                         <button type="button" class="btn btn-primary auth-btn" onclick="handleForgotStep1()">下一步</button>
@@ -605,7 +605,7 @@
     <!-- Toast消息提示 -->
     <div id="toast" class="toast"></div>
 
-    <script src="js/api.js"></script>
+    <script src="js/database.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/app.js"></script>
     <script>
@@ -734,14 +734,14 @@
         errorEl.textContent = '';
 
         if (!username) {
-            errorEl.textContent = '请输入昵称';
+            errorEl.textContent = '请输入用户名';
             return;
         }
 
         try {
             const result = await Auth.getSecurityQuestion(username);
             if (!result) {
-                errorEl.textContent = '昵称不存在';
+                errorEl.textContent = '用户名不存在';
                 return;
             }
             document.getElementById('forgot-question').value = result.question;
@@ -781,16 +781,12 @@
     });
 
     // 显示主系统
-    async function showMainSystem(session) {
+    function showMainSystem(session) {
         document.getElementById('auth-page').style.display = 'none';
         document.getElementById('main-system').style.display = 'block';
         document.getElementById('user-display-name').textContent = session.name + ' (' + session.username + ')';
         if (window.App && typeof window.App.init === 'function') {
-            try {
-                await window.App.init();
-            } catch (e) {
-                console.error('初始化失败:', e);
-            }
+            window.App.init();
         }
     }
 
@@ -829,9 +825,9 @@
                     <div id="profile-info-panel" class="profile-panel active">
                         <form id="profile-info-form">
                             <div class="profile-field">
-                                <label>昵称</label>
-                                <input type="text" id="profile-nickname" value="${user.username}" maxlength="20">
-                                <span class="field-hint">2-20位字母、数字或中文或数字</span>
+                                <label>用户名</label>
+                                <input type="text" value="${user.username}" disabled>
+                                <span class="field-hint">用户名不可修改</span>
                             </div>
                             <div class="profile-field">
                                 <label>姓名</label>
@@ -976,29 +972,14 @@
             errorEl.textContent = '';
             successEl.textContent = '';
 
-            const nickname = document.getElementById('profile-nickname').value.trim();
             const phone = document.getElementById('profile-phone').value.trim();
             const email = document.getElementById('profile-email').value.trim();
 
             try {
-                const nicknameChanged = isFieldChanged('nickname', nickname, user);
-                const phoneChanged = isFieldChanged('phone', phone, user);
-                const emailChanged = isFieldChanged('email', email, user);
-                const hasSensitiveChange = phoneChanged || emailChanged;
+                const hasSensitiveChange = isFieldChanged('phone', phone, user) || isFieldChanged('email', email, user);
 
-                if (nicknameChanged || hasSensitiveChange) {
-                    if (hasSensitiveChange) {
-                        showSecurityVerification(user, { nickname: nicknameChanged ? nickname : undefined, phone, email });
-                    } else {
-                        await Auth.updateProfile(user.userId, { nickname });
-                        const session = Auth.getCurrentUser();
-                        if (session) {
-                            session.username = nickname;
-                            localStorage.setItem('warehouse_current_user', JSON.stringify(session));
-                        }
-                        successEl.textContent = '昵称更新成功！';
-                        setTimeout(() => successEl.textContent = '', 3000);
-                    }
+                if (hasSensitiveChange) {
+                    showSecurityVerification(user, { phone, email });
                 } else {
                     successEl.textContent = '没有需要修改的字段';
                     setTimeout(() => successEl.textContent = '', 3000);
@@ -1011,9 +992,6 @@
 
     // 检查字段是否变化
     function isFieldChanged(field, newValue, user) {
-        if (field === 'nickname') {
-            return newValue !== user.username;
-        }
         if (field === 'phone') {
             const profile = document.getElementById('profile-phone');
             const currentPhone = profile.dataset.originalValue !== undefined ? profile.dataset.originalValue : '';
@@ -1075,7 +1053,6 @@
 
             try {
                 await Auth.updateProfileWithSecurity(user.userId, {
-                    nickname: data.nickname,
                     phone: data.phone,
                     email: data.email
                 }, answer);
@@ -1085,13 +1062,6 @@
                 successEl.textContent = '个人信息更新成功！';
                 updateFieldStatus('phone', data.phone);
                 updateFieldStatus('email', data.email);
-                if (data.nickname) {
-                    const session = Auth.getCurrentUser();
-                    if (session) {
-                        session.username = data.nickname;
-                        localStorage.setItem('warehouse_current_user', JSON.stringify(session));
-                    }
-                }
                 setTimeout(() => successEl.textContent = '', 3000);
             } catch (err) {
                 errorEl.textContent = err.message;
@@ -1145,8 +1115,7 @@
                 'name': '姓名',
                 'phone': '手机号',
                 'email': '邮箱',
-                'password': '密码',
-                '昵称': '昵称'
+                'password': '密码'
             };
 
             container.innerHTML = '<div class="logs-table"><div class="logs-header"><span>字段</span><span>修改前</span><span>修改后</span><span>修改时间</span></div>' +
@@ -1168,16 +1137,9 @@
 
     // 页面加载时检查登录状态
     document.addEventListener('DOMContentLoaded', async function() {
-        if (Auth.isLoggedIn()) {
-            try {
-                await Auth.restore();
-                const user = Auth.getCurrentUser();
-                showMainSystem(user);
-            } catch (e) {
-                // Token expired or invalid
-                Auth.logout();
-                document.getElementById('auth-page').style.display = 'flex';
-            }
+        const user = Auth.getCurrentUser();
+        if (user) {
+            showMainSystem(user);
         } else {
             document.getElementById('auth-page').style.display = 'flex';
         }
