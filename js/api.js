@@ -2,8 +2,8 @@
     'use strict';
 
     // ==================== 配置（替换为你的 Supabase 信息） ====================
-    const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-    const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+    const SUPABASE_URL = 'https://eutkthmdhyvobpnymbjx.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_kAoNdDLgj9AybwRPrOlEzg_E-mcrX6t';
 
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
