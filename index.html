@@ -17,14 +17,9 @@
 
             <!-- 登录表单 -->
             <form id="login-form" class="auth-form active">
-                <div class="login-method-tabs">
-                    <button type="button" class="login-method-tab active" data-method="phone" onclick="switchLoginMethod('phone')">手机号登录</button>
-                    <button type="button" class="login-method-tab" data-method="email" onclick="switchLoginMethod('email')">邮箱登录</button>
-                </div>
                 <div class="auth-form-group">
-                    <label id="login-label">手机号</label>
-                    <input type="tel" id="login-credential" placeholder="请输入11位手机号" required>
-                    <span id="login-credential-hint" class="field-hint"></span>
+                    <label>邮箱</label>
+                    <input type="email" id="login-email" placeholder="请输入注册邮箱" required>
                 </div>
                 <div class="auth-form-group">
                     <label>密码</label>
@@ -65,29 +60,12 @@
                 </div>
                 <div class="auth-form-row">
                     <div class="auth-form-group">
+                        <label>邮箱 <span class="required">*</span></label>
+                        <input type="email" id="reg-email" placeholder="example@mail.com" required>
+                    </div>
+                    <div class="auth-form-group">
                         <label>手机号</label>
-                        <input type="tel" id="reg-phone" placeholder="11位手机号">
-                    </div>
-                    <div class="auth-form-group">
-                        <label>邮箱</label>
-                        <input type="email" id="reg-email" placeholder="example@mail.com">
-                    </div>
-                </div>
-                <div class="auth-form-row">
-                    <div class="auth-form-group">
-                        <label>密保问题 <span class="required">*</span></label>
-                        <select id="reg-security-question" required>
-                            <option value="">请选择密保问题</option>
-                            <option value="你的小学名称是什么？">你的小学名称是什么？</option>
-                            <option value="你的出生地是哪里？">你的出生地是哪里？</option>
-                            <option value="你最喜欢的运动是什么？">你最喜欢的运动是什么？</option>
-                            <option value="你的宠物名字是什么？">你的宠物名字是什么？</option>
-                            <option value="你最喜欢的书籍是什么？">你最喜欢的书籍是什么？</option>
-                        </select>
-                    </div>
-                    <div class="auth-form-group">
-                        <label>密保答案 <span class="required">*</span></label>
-                        <input type="text" id="reg-security-answer" placeholder="请牢记你的答案" required>
+                        <input type="tel" id="reg-phone" placeholder="11位手机号（可选）">
                     </div>
                 </div>
                 <div class="auth-form-actions">
@@ -103,33 +81,13 @@
             <form id="forgot-form" class="auth-form">
                 <h2>找回密码</h2>
                 <div id="forgot-step1">
+                    <p style="margin-bottom:15px;color:#666;font-size:14px;">输入注册邮箱，我们将发送密码重置链接。</p>
                     <div class="auth-form-group">
-                        <label>用户名</label>
-                        <input type="text" id="forgot-username" placeholder="请输入用户名" required>
+                        <label>注册邮箱</label>
+                        <input type="email" id="forgot-email" placeholder="请输入注册邮箱" required>
                     </div>
                     <div class="auth-form-actions">
-                        <button type="button" class="btn btn-primary auth-btn" onclick="handleForgotStep1()">下一步</button>
-                    </div>
-                </div>
-                <div id="forgot-step2" style="display:none">
-                    <div class="auth-form-group">
-                        <label id="forgot-question-label">密保问题</label>
-                        <input type="text" id="forgot-question" readonly>
-                    </div>
-                    <div class="auth-form-group">
-                        <label>密保答案</label>
-                        <input type="text" id="forgot-answer" placeholder="请输入你的答案" required>
-                    </div>
-                    <div class="auth-form-group">
-                        <label>新密码</label>
-                        <input type="password" id="forgot-new-password" placeholder="至少6位" required>
-                    </div>
-                    <div class="auth-form-group">
-                        <label>确认新密码</label>
-                        <input type="password" id="forgot-confirm" placeholder="再次输入新密码" required>
-                    </div>
-                    <div class="auth-form-actions">
-                        <button type="submit" class="btn btn-primary auth-btn">重置密码</button>
+                        <button type="submit" class="btn btn-primary auth-btn">发送重置邮件</button>
                     </div>
                 </div>
                 <div class="auth-links">
@@ -605,6 +563,7 @@
     <!-- Toast消息提示 -->
     <div id="toast" class="toast"></div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
     <script src="js/database.js"></script>
     <script src="js/api.js"></script>
     <script src="js/auth.js"></script>
@@ -625,72 +584,21 @@
         document.getElementById(formName + '-form').classList.add('active');
         document.querySelectorAll('.auth-error').forEach(e => e.textContent = '');
         document.querySelectorAll('.auth-success').forEach(e => e.textContent = '');
-        document.getElementById('forgot-step2').style.display = 'none';
-        document.getElementById('forgot-step1').style.display = 'block';
-    }
-
-    // 切换登录方式（手机号/邮箱）
-    let currentLoginMethod = 'phone';
-
-    function switchLoginMethod(method) {
-        currentLoginMethod = method;
-        document.querySelectorAll('.login-method-tab').forEach(tab => {
-            tab.classList.toggle('active', tab.dataset.method === method);
-        });
-
-        const input = document.getElementById('login-credential');
-        const label = document.getElementById('login-label');
-        const hint = document.getElementById('login-credential-hint');
-
-        if (method === 'email') {
-            label.textContent = '邮箱';
-            input.type = 'email';
-            input.placeholder = '请输入邮箱地址';
-            input.value = '';
-        } else {
-            label.textContent = '手机号';
-            input.type = 'tel';
-            input.placeholder = '请输入11位手机号';
-            input.value = '';
+        if (document.getElementById('forgot-step1')) {
+            document.getElementById('forgot-step1').style.display = 'block';
         }
-        hint.textContent = '';
-        document.getElementById('login-error').textContent = '';
     }
-
-    // 登录输入即时验证
-    document.getElementById('login-credential').addEventListener('input', function() {
-        const hint = document.getElementById('login-credential-hint');
-        const val = this.value.trim();
-
-        if (currentLoginMethod === 'phone') {
-            if (val && !/^1[3-9]\d{9}$/.test(val)) {
-                hint.textContent = '请输入有效的11位手机号';
-                hint.className = 'field-hint error';
-            } else {
-                hint.textContent = '';
-                hint.className = 'field-hint';
-            }
-        } else {
-            if (val && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val)) {
-                hint.textContent = '请输入有效的邮箱地址';
-                hint.className = 'field-hint error';
-            } else {
-                hint.textContent = '';
-                hint.className = 'field-hint';
-            }
-        }
-    });
 
     // 登录
     document.getElementById('login-form').addEventListener('submit', async function(e) {
         e.preventDefault();
-        const credential = document.getElementById('login-credential').value.trim();
+        const email = document.getElementById('login-email').value.trim();
         const password = document.getElementById('login-password').value;
         const errorEl = document.getElementById('login-error');
         errorEl.textContent = '';
 
         try {
-            const session = await Auth.login(credential, password, currentLoginMethod);
+            const session = await Auth.login(email, password);
             showMainSystem(session);
         } catch (err) {
             errorEl.textContent = err.message;
@@ -710,16 +618,19 @@
             return;
         }
 
+        const email = document.getElementById('reg-email').value.trim();
+        if (!email) {
+            errorEl.textContent = '邮箱为必填项';
+            return;
+        }
+
         try {
-            const result = await Auth.register({
+            await Auth.register({
                 username: document.getElementById('reg-username').value.trim(),
                 password: password,
-                confirmPassword: confirm,
                 name: document.getElementById('reg-name').value.trim(),
                 phone: document.getElementById('reg-phone').value.trim(),
-                email: document.getElementById('reg-email').value.trim(),
-                securityQuestion: document.getElementById('reg-security-question').value,
-                securityAnswer: document.getElementById('reg-security-answer').value.trim()
+                email: email
             });
             showToast('注册成功！请登录', 'success');
             showAuthForm('login');
@@ -728,33 +639,7 @@
         }
     });
 
-    // 密码找回 - 第一步
-    async function handleForgotStep1() {
-        const username = document.getElementById('forgot-username').value.trim();
-        const errorEl = document.getElementById('forgot-error');
-        errorEl.textContent = '';
-
-        if (!username) {
-            errorEl.textContent = '请输入用户名';
-            return;
-        }
-
-        try {
-            const result = await Auth.getSecurityQuestion(username);
-            if (!result) {
-                errorEl.textContent = '用户名不存在';
-                return;
-            }
-            document.getElementById('forgot-question').value = result.question;
-            document.getElementById('forgot-step1').style.display = 'none';
-            document.getElementById('forgot-step2').style.display = 'block';
-            document.getElementById('forgot-step2').dataset.userId = result.userId;
-        } catch (err) {
-            errorEl.textContent = err.message;
-        }
-    }
-
-    // 密码找回 - 提交
+    // 密码找回 - 发送重置邮件
     document.getElementById('forgot-form').addEventListener('submit', async function(e) {
         e.preventDefault();
         const errorEl = document.getElementById('forgot-error');
@@ -762,20 +647,11 @@
         errorEl.textContent = '';
         successEl.textContent = '';
 
-        const userId = parseInt(document.getElementById('forgot-step2').dataset.userId);
-        const answer = document.getElementById('forgot-answer').value.trim();
-        const newPassword = document.getElementById('forgot-new-password').value;
-        const confirm = document.getElementById('forgot-confirm').value;
-
-        if (newPassword !== confirm) {
-            errorEl.textContent = '两次输入的密码不一致';
-            return;
-        }
+        const email = document.getElementById('forgot-email').value.trim();
 
         try {
-            await Auth.resetPassword(userId, answer, newPassword);
-            successEl.textContent = '密码重置成功！请使用新密码登录';
-            setTimeout(() => showAuthForm('login'), 2000);
+            await Auth.sendPasswordResetEmail(email);
+            successEl.textContent = '密码重置邮件已发送，请检查邮箱！';
         } catch (err) {
             errorEl.textContent = err.message;
         }
@@ -792,12 +668,12 @@
     }
 
     // 退出登录
-    function handleLogout() {
+    async function handleLogout() {
         if (confirm('确定要退出登录吗？')) {
-            Auth.logout();
+            await Auth.logout();
             document.getElementById('auth-page').style.display = 'flex';
             document.getElementById('main-system').style.display = 'none';
-            document.getElementById('login-username').value = '';
+            document.getElementById('login-email').value = '';
             document.getElementById('login-password').value = '';
         }
     }
@@ -1006,7 +882,7 @@
         return false;
     }
 
-    // 显示密保验证弹窗
+    // 显示密码验证弹窗
     function showSecurityVerification(user, data) {
         const overlay = document.createElement('div');
         overlay.className = 'modal-overlay';
@@ -1018,15 +894,10 @@
                 </div>
                 <div class="modal-body">
                     <div class="security-icon">&#x1F512;</div>
-                    <p class="security-desc">修改手机号或邮箱需要进行安全验证</p>
+                    <p class="security-desc">修改手机号或邮箱需要验证当前密码</p>
                     <div class="profile-field">
-                        <label>密保问题</label>
-                        <input type="text" id="security-question-display" readonly>
-                    </div>
-                    <div class="profile-field">
-                        <label>密保答案</label>
-                        <input type="text" id="security-answer-input" placeholder="请输入你的密保答案">
-                        <span id="security-answer-hint" class="field-hint"></span>
+                        <label>当前密码</label>
+                        <input type="password" id="security-password-input" placeholder="请输入当前登录密码">
                     </div>
                     <div id="security-error" class="auth-error"></div>
                     <div class="profile-form-actions">
@@ -1038,17 +909,13 @@
         `;
         document.body.appendChild(overlay);
 
-        Auth.getUserProfile(user.userId).then(profile => {
-            document.getElementById('security-question-display').value = profile.securityQuestion || '未设置密保问题';
-        });
-
         document.getElementById('security-confirm-btn').addEventListener('click', async function() {
-            const answer = document.getElementById('security-answer-input').value.trim();
+            const password = document.getElementById('security-password-input').value;
             const errorEl = document.getElementById('security-error');
             errorEl.textContent = '';
 
-            if (!answer) {
-                errorEl.textContent = '请输入密保答案';
+            if (!password) {
+                errorEl.textContent = '请输入当前密码';
                 return;
             }
 
@@ -1056,7 +923,7 @@
                 await Auth.updateProfileWithSecurity(user.userId, {
                     phone: data.phone,
                     email: data.email
-                }, answer);
+                }, password);
 
                 overlay.remove();
                 const successEl = document.getElementById('profile-success');
@@ -1138,12 +1005,20 @@
 
     // 页面加载时检查登录状态
     document.addEventListener('DOMContentLoaded', async function() {
-        const user = Auth.getCurrentUser();
-        if (user) {
-            showMainSystem(user);
-        } else {
-            document.getElementById('auth-page').style.display = 'flex';
+        // 先检查 Supabase session 恢复
+        const session = Auth.getCurrentUser();
+        if (session) {
+            try {
+                const restored = await Auth.restore();
+                if (restored) {
+                    showMainSystem(restored);
+                    return;
+                }
+            } catch (e) {
+                // session 已过期
+            }
         }
+        document.getElementById('auth-page').style.display = 'flex';
     });
     </script>
 </body>
