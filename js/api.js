@@ -47,12 +47,13 @@
             }
             if (!authData.user) throw new Error('注册失败，请稍后重试');
 
-            // Step 2: 创建用户资料
+            // Step 2: 创建用户资料（存入 email 以供手机号登录查询）
             const { error: profileError } = await supabase.from('profiles').insert({
                 user_id: authData.user.id,
                 username,
                 name,
-                phone: phone || ''
+                phone: phone || '',
+                email: email
             });
             if (profileError) {
                 // 回滚：删除 auth 用户
@@ -71,8 +72,19 @@
         },
 
         async login(data) {
-            const { email, password } = data;
-            if (!email || !password) throw new Error('请输入邮箱和密码');
+            const { credential, password, method } = data;
+            if (!credential || !password) throw new Error('请输入登录凭证和密码');
+
+            let email = credential;
+
+            // 手机号登录 → 通过 profiles 表查出邮箱
+            if (method === 'phone') {
+                if (!/^1[3-9]\d{9}$/.test(credential)) throw new Error('手机号格式不正确');
+                const { data: profile } = await supabase.from('profiles')
+                    .select('email').eq('phone', credential).single();
+                if (!profile || !profile.email) throw new Error('手机号未注册');
+                email = profile.email;
+            }
 
             const { data: authData, error } = await supabase.auth.signInWithPassword({
                 email,

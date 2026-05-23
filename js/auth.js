@@ -10,11 +10,11 @@
             return result;
         },
 
-        async login(email, password) {
-            if (!email || !password) {
-                throw new Error('请输入邮箱和密码');
+        async login(credential, password, method) {
+            if (!credential || !password) {
+                throw new Error('请输入登录凭证和密码');
             }
-            const result = await API.login({ email, password });
+            const result = await API.login({ credential, password, method });
             const session = {
                 userId: result.user.userId,
                 username: result.user.username,
